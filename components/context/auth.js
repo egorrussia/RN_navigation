@@ -8,14 +8,54 @@ const USER_KEY='@user_key';
 const API_URL = "http://159.253.19.16:3001"
 
 export const AuthProvider = ({children}) => {
-  /** START */
-  // создание данных и функций
+
   const [phone, setPhone] = useState('');
   const [userName, setUserName] = useState('');
   const [shops, setShops] = useState([]);
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const initialLoginState = {
+    isLoading: true,
+    userName: null,
+    userToken: null,
+  };
+
+  const loginReducer = (prevState, action) => {
+    switch( action.type ) {
+      case 'RETRIEVE_TOKEN': 
+        return {
+          ...prevState,
+          userToken: action.token,
+          userName: action.id,
+          isLoading: false,
+        };
+      case 'LOGIN': 
+        return {
+          ...prevState,
+          userName: action.id,
+          userToken: action.token,
+          isLoading: false,
+        };
+      case 'LOGOUT': 
+        return {
+          ...prevState,
+          userName: null,
+          userToken: null,
+          isLoading: false,
+        };
+      case 'REGISTER': 
+        return {
+          ...prevState,
+          userName: action.id,
+          userToken: action.token,
+          isLoading: false,
+        };
+    }
+  };
+
+  const [loginState, dispatch] = React.useReducer(loginReducer, initialLoginState);
 
   useEffect(()=>{
     
@@ -31,25 +71,35 @@ export const AuthProvider = ({children}) => {
 
 },[userName])
 
-  useEffect(()=>{
-    
-    (async ()=>{
+  // useEffect(()=>{
+  //     try {
+  //       let userData = async()=>await AsyncStorage.getItem(USER_KEY)
+  //       if(userData){
+  //         const {userName}=JSON.parse(userData)
+  //         if(userName){
+  //           setUserName(userName)
+  //         }
+  //       }
+  //       setLoading(false)
+  //     } catch (e) {
+  //       // saving error
+  //     }
+  // },[])
 
+  useEffect(() => {
+      let userToken = null;
+      let name = null;
       try {
-        let userData = await AsyncStorage.getItem(USER_KEY)
-        if(userData){
-          const {userName}=JSON.parse(userData)
-          if(userName){
-            setUserName(userName)
-          }
-        }
-        setLoading(false)
-      } catch (e) {
-        // saving error
+        userToken = async()=>await AsyncStorage.getItem('userToken');
+        name = async()=>await AsyncStorage.getItem('userName');
+      } catch(e) {
+        console.log(e);
       }
-    })()
-  },[])
+      dispatch({ type: 'RETRIEVE_TOKEN', token: userToken, id: name });
+  }, []);
 
+
+  //регистрация
   const  userSignUp = (func) =>{
 
      fetch(API_URL + "/users/signup",{
@@ -63,13 +113,20 @@ export const AuthProvider = ({children}) => {
       })
     })
     .then(res=>res.json())
-    .then(data=>{
-        console.log(data)
+    .then(async data=>{
+        const {name, shops, email, phone,role,token='1234'} = data.item 
         func()
+        try {
+          await AsyncStorage.setItem('userToken', token);
+          await AsyncStorage.setItem('userName', name);
+        } catch(e) {
+          console.log(e);
+        }
+        dispatch({ type: 'LOGIN', id: name, token: token });
     }).catch(err=>console.log(err))
-
   }
 
+  //авторизация
   const  userSignIn = ({phone,password},func) =>{
 
     fetch(API_URL + "/users/signin",{
@@ -81,14 +138,33 @@ export const AuthProvider = ({children}) => {
       })
     })
     .then(res=>res.json())
-    .then(data=>{
-        const {name, shops, email, phone,role} = data.item 
+    .then(async data=>{
+        const {name, shops, email, phone,role,token='1234'} = data.item 
         setUserName(name)
         setEmail(email)
         setPhone(phone)
         func()
+
+        try {
+          await AsyncStorage.setItem('userToken', token);
+          await AsyncStorage.setItem('userName', name);
+        } catch(e) {
+          console.log(e);
+        }
+        dispatch({ type: 'LOGIN', id: name, token: token });
+
     }).catch(err=>console.log(err))
 
+  }
+
+   const userSignOut = async ()=>{
+    try {
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('userName');
+    } catch(e) {
+      console.log(e);
+    }
+    dispatch({ type: 'LOGOUT' });
   }
 
   const  checkPhone = ({phone},func) =>{
@@ -141,7 +217,10 @@ export const AuthProvider = ({children}) => {
     userSignIn,
     checkPhone,
     checkCode,
-    loading
+    loading,
+    userSignOut,
+    loginState
+
   }
 
   return (

@@ -2,9 +2,25 @@ import React,{useEffect,useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import DrawerNavigator from './navigators/DrawerNavigator';
 import RootStackNavigator from './navigators/RootStackNavigator';
-import {AuthProvider} from "./components/context/auth";
+import {AuthProvider,useAuth} from "./components/context/auth";
 import * as Font from 'expo-font';
 import Loader from "./components/Loader";
+
+const NavigationWrapper = ()=>{
+
+  const {loginState} = useAuth();
+  const {isLoading,userToken} = loginState;
+  if(isLoading){
+    return <Loader/>
+  }
+  const auth = !!userToken;
+  return (
+    <NavigationContainer>
+      {(auth) ? <DrawerNavigator/> : <RootStackNavigator/>} 
+    </NavigationContainer>
+  )
+
+}
 
 const App = () => {
 
@@ -27,15 +43,16 @@ const App = () => {
     )
   }
 
+
   return (
     <AuthProvider>
-      <NavigationContainer>
-          {/* <DrawerNavigator/> */}
-          <RootStackNavigator/>
-      </NavigationContainer>
+      <NavigationWrapper/>
     </AuthProvider>
   );
 }
+
+
+
 
 export default App;
 

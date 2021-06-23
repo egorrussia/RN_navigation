@@ -4,13 +4,18 @@ import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { Drawer } from 'react-native-paper';
 //import { color } from 'react-native-reanimated';
 import {FontAwesome5} from '@expo/vector-icons';
+import {useAuth} from "../components/context/auth";
+
+
 
 const size = 5;
 const color = "#fff";
 
 const DrawerContent = (props) => {
+  
+    const {userSignOut} = useAuth();
 
-  return (
+    return (
     <View style={styles.drawer}>
         <DrawerContentScrollView {...props}>
             <View style={styles.DrawerContent}>
@@ -40,12 +45,12 @@ const DrawerContent = (props) => {
         <Drawer.Section style={styles.bottomDrawerSection}>
             <Drawer.Item 
                 label='Выход'
-                onPress={()=>{}}
+                onPress={()=>userSignOut()}
             />
         </Drawer.Section>
 
     </View>
-  );
+    );
 };
 
 export default DrawerContent;
