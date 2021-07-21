@@ -1,8 +1,10 @@
 import React from 'react';
 import {StyleSheet} from 'react-native';
 import {Header, Left, Button,Right,Icon,Body,Title, View, Text} from 'native-base';
-//import {FontAwesome} from '@expo/vector-icons';
 import {FontAwesome5} from '@expo/vector-icons';
+import {FontAwesome} from '@expo/vector-icons';
+
+
 
 const MainHeader = ({navigation})=>{
 

@@ -1,5 +1,5 @@
 import React,{useState,useEffect} from 'react';
-import { View,Text,Button,Icon, Drawer} from 'native-base';
+import { View,Text,Button,Icon, Modal} from 'native-base';
 import MapView,{PROVIDER_GOOGLE} from 'react-native-maps';
 import {useAuth} from '../components/context/auth';
 import {StyleSheet,Dimensions,Image,Platform,Animated} from 'react-native'
@@ -20,7 +20,9 @@ const SelectShopsScreen = ()=>{
     const _map = React.useRef()
     const _scrollView = React.useRef()
 
-    const [shops,setShops] = useState([])
+    const [shops,setShops] = useState([]);
+    const [choosenShops,setChoosenShops] = useState([]);
+    const [showModal, setShowModal] = useState(false);
     
     const [region, setRegion] = useState({
         latitude: 55.63,
@@ -29,15 +31,15 @@ const SelectShopsScreen = ()=>{
         longitudeDelta: 0.05
     })
 
-    const {
-        shops: choosenShops,
-        setShops: setChoosenShops,
-        userSignUp
-    } = useAuth()
+    const {user, setUser, token} =useAuth();
+    
+    
 
     useEffect(()=>{
 
-        fetch(API_URL + "/shops")
+        fetch(API_URL + "/shops",{headers:{
+            "Authorization":`Bearer ${token}`
+        }})
         .then(res=>res.json())
         .then(data=>{
             setShops(data.items)
@@ -48,7 +50,7 @@ const SelectShopsScreen = ()=>{
     useEffect(()=>{ 
         mapAnimation.addListener(({value})=>{
             let index = Math.floor(value/CARD_WIDTH + 0.3)
-            if(index>=shops.length){
+            if(index >= shops.length){
                 index = shops.length -1 
             }
             if(index<=0){
@@ -99,14 +101,13 @@ const SelectShopsScreen = ()=>{
 
     const selectShops = () =>{
         if(choosenShops.length){
-            userSignUp(()=>{
-                navigation.navigate("Products");
-            });
+            setUser({...user, shops: choosenShops}); 
+            navigation.navigate("Products");
         }
     }
 
     return(
-        <View>
+        <View style={styles.container}>
             <MapView style={styles.map}
                 ref={_map}
                 initialRegion={region}
@@ -143,6 +144,58 @@ const SelectShopsScreen = ()=>{
                     )
                 })}
             </MapView>
+            <View style={styles.skipWrapper}>
+                <Button style={styles.skipButton} onPress={() => setShowModal(true)}>
+                    <Text style={styles.cardDescription}>Пропустить шаг</Text>
+                </Button>
+            </View>
+
+
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
+        <Modal.Content maxWidth="400px">
+          <Modal.CloseButton />
+          <Modal.Header>Modal Title</Modal.Header>
+          <Modal.Body>
+            Sit nulla est ex deserunt exercitation anim occaecat. Nostrud
+            ullamco deserunt aute id consequat veniam incididunt duis in sint
+            irure nisi. Mollit officia cillum Lorem ullamco minim nostrud elit
+            officia tempor esse quis. Sunt ad dolore quis aute consequat. Magna
+            exercitation reprehenderit magna aute tempor cupidatat consequat
+            elit dolor adipisicing. Mollit dolor eiusmod sunt ex incididunt
+            cillum quis. Velit duis sit officia eiusmod Lorem aliqua enim
+            ullamco deserunt aute id consequat veniam incididunt duis in sint
+            irure nisi. Mollit officia cillum Lorem ullamco minim nostrud elit
+            officia tempor esse quis. Sunt ad dolore quis aute consequat. Magna
+            exercitation reprehenderit magna aute tempor cupidatat consequat
+            elit dolor adipisicing. Mollit dolor eiusmod sunt ex incididunt
+            cillum quis. Velit duis sit officia eiusmod Lorem aliqua enim
+            exercitation reprehenderit magna aute tempor cupidatat consequat
+            elit dolor adipisicing. Mollit dolor eiusmod sunt ex incididunt
+            cillum quis. Velit duis sit officia eiusmod Lorem aliqua enim
+            ullamco deserunt aute id consequat veniam incididunt duis in sint
+            irure nisi. Mollit officia cillum Lorem ullamco minim nostrud elit
+            officia tempor esse quis. Sunt ad dolore quis aute consequat. Magna
+            exercitation reprehenderit magna aute tempor cupidatat consequat
+            elit dolor adipisicing. Mollit dolor eiusmod sunt ex incididunt
+            cillum quis. Velit duis sit officia eiusmod Lorem aliqua enim
+          </Modal.Body>
+          <Modal.Footer>
+            <Button.Group variant="ghost" space={2}>
+              <Button>LEARN MORE</Button>
+              <Button
+                onPress={() => {
+                  setShowModal(false)
+                }}
+              >
+                ACCEPT
+              </Button>
+            </Button.Group>
+          </Modal.Footer>
+        </Modal.Content>
+      </Modal>
+
+
+
             <View  style={styles.scrollView}>
                 <Animated.ScrollView
                     ref={_scrollView}
@@ -204,9 +257,6 @@ const SelectShopsScreen = ()=>{
                                                     }
                         
                                                     setChoosenShops(newShops);                                                
-                                                    // shops[index].checked=true
-                                                    // console.log(shops)
-                                                    // setShops(shops)
                                                 }}
                                             />
                                         </View>
@@ -234,18 +284,20 @@ const SelectShopsScreen = ()=>{
 }
 
 const styles = StyleSheet.create({
-
+    container: {
+        flex: 1
+    },
     map: {
         height:"100%"
     },
-    bubbel:{
-        flexDirection: 'column',
-        backgroundColor:"#fff",
-        borderRadius:6,
-        borderColor: '#ccc',
-        borderWidth: 0.5,
-        padding: 15,
-        width: 150
+    skipWrapper:{
+        position: "absolute",
+        top:Platform.OS === 'ios' ? 10 : 0,
+        width:"100%",
+        flexDirection: "row",
+        flex:1,
+        alignItems: 'center',
+        justifyContent: 'flex-end'
     },
     image:{
         width: 120,
@@ -258,7 +310,7 @@ const styles = StyleSheet.create({
         right: 0,
         paddingVertical:5,
         backgroundColor: "#fff",
-        //marginVertical: 40
+
     },
     cardWrapper:{
         padding: 5
@@ -319,10 +371,47 @@ const styles = StyleSheet.create({
     },
     button:{
         borderRadius: 10,
+        marginRight: 35,
+        marginLeft:35,
+        marginBottom: 10,
         marginTop: 10,
+
+    },
+    skipButton:{
+        marginRight: 10,
+        marginLeft:10,
+        marginBottom: 10,
+        marginTop: 10,
+        backgroundColor:'#fff',
+        borderRadius:20,
+        padding:8,
+        height:35,
+        shadowColor: '#ccc',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.5,
+        shadowRadius: 5,
+        elevation: 10,
+    },
+
+    popupWrapper: {
+        position: "absolute",
+        justifyContent: 'center',
+        alignItems: 'center',
+        width:"100%",
+        height: "100%",
+        flexDirection: "column",
+        backgroundColor: "black",
+        opacity: 0.7,
+       
+    },
+    popupInner: {
         marginRight: 50,
         marginLeft:50,
-        marginBottom: 10
+        borderRadius: 10,
+        height: 200,
+        backgroundColor: "#fff",
+        margin: 'auto',
+
     }
 
 

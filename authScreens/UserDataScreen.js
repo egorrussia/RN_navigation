@@ -4,9 +4,9 @@ import {StyleSheet} from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import {useAuth} from '../components/context/auth';
 
-import {Feather} from "@expo/vector-icons"
-
 const UserDataScreen = ({navigation})=>{
+
+    const {user,setUser} = useAuth();
 
     const [data,setData] = useState({
         name: '',
@@ -24,7 +24,6 @@ const UserDataScreen = ({navigation})=>{
         password: false
     })
 
-    const {setUserName,setPassword} = useAuth();
     const nameErrorText = 'поле должно содержать более 2-х символов'
     var passwordErrorText = 'пароль должен быть не менее 4-х символов'
    
@@ -35,24 +34,24 @@ const UserDataScreen = ({navigation})=>{
 
     const checkFields = async ()=>{
 
-                if (data.name.length>=2){
-                    check.name = true
-                    error.name = false
-                } else {
-                    check.name = false
-                    error.name = true
-                }
+        if (data.name.length>=2){
+            check.name = true
+            error.name = false
+        } else {
+            check.name = false
+            error.name = true
+        }
 
-                if(data.password.length>=4){
-                    check.password = true
-                    error.password = false    
-                }else{
-                    check.password = false
-                    error.password = true  
-                }
+        if(data.password.length>=4){
+            check.password = true
+            error.password = false    
+        }else{
+            check.password = false
+            error.password = true  
+        }
 
-                setCheck({ ...check })
-                setError({...error})
+        setCheck({ ...check })
+        setError({...error})
 
     }
 
@@ -60,8 +59,7 @@ const UserDataScreen = ({navigation})=>{
     useEffect(()=>{
 
         if(check.name && check.password){
-            setUserName(data.name);
-            setPassword(data.password);
+            setUser({...user,name: data.name, password: data.password});
             navigation.navigate("SelectShop");
         }
 

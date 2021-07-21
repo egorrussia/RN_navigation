@@ -3,8 +3,10 @@ import {NavigationContainer} from '@react-navigation/native';
 import DrawerNavigator from './navigators/DrawerNavigator';
 import RootStackNavigator from './navigators/RootStackNavigator';
 import {AuthProvider,useAuth} from "./components/context/auth";
-import * as Font from 'expo-font';
+import { useFonts } from 'expo-font';
 import Loader from "./components/Loader";
+import {NativeBaseProvider} from 'native-base';
+
 
 const NavigationWrapper = ()=>{
 
@@ -15,43 +17,71 @@ const NavigationWrapper = ()=>{
   }
   const auth = !!userToken;
   return (
-    <NavigationContainer>
-      {(auth) ? <DrawerNavigator/> : <RootStackNavigator/>} 
-    </NavigationContainer>
+      <NavigationContainer>
+        {(auth) ? <DrawerNavigator/> : <RootStackNavigator/>} 
+      </NavigationContainer>
+
   )
 
 }
+
+
+
 
 const App = () => {
 
   const [loading,setLoading]=useState(true);
 
-  useEffect(()=>{
-    const loadFonts = async () =>{
-      await Font.loadAsync({
-        Roboto: require('native-base/Fonts/Roboto.ttf'),
-        Roboto_medium: require('native-base/Fonts/Roboto_medium.ttf'),
-      });
-      setLoading(false)
+  // useEffect(()=>{
+  //   const loadFonts = async () =>{
+  //     await Font.loadAsync({
+  //       Roboto: require('native-base/Fonts/Roboto.ttf'),
+  //       Roboto_medium: require('native-base/Fonts/Roboto_medium.ttf'),
+  //     });
+  //     setLoading(false)
+  //   }
+  //   loadFonts()
+  // }, [])
+
+    const [loaded] = useFonts({
+      Roboto: require('./assets/fonts/Roboto-Medium.ttf')
+    });
+    
+
+    if (!loaded) {
+      return(
+        <NativeBaseProvider>
+          <Loader/>
+        </NativeBaseProvider>
+      )
     }
-    loadFonts()
-  }, [])
 
-  if(loading){
     return(
-      <Loader/>
+      <NativeBaseProvider>
+        <AuthProvider>
+          <NavigationWrapper/>
+        </AuthProvider>
+      </NativeBaseProvider>
     )
-  }
 
 
-  return (
-    <AuthProvider>
-      <NavigationWrapper/>
-    </AuthProvider>
-  );
+  // if(loading){
+  //   return(
+      
+  //     <NativeBaseProvider>
+  //       <Loader/>
+  //     </NativeBaseProvider>
+  //   )
+  // }
+
+  // return (
+  //   <NativeBaseProvider>
+  //     <AuthProvider>
+  //       <NavigationWrapper/>
+  //     </AuthProvider>
+  //   </NativeBaseProvider>
+  // );
 }
-
-
 
 
 export default App;

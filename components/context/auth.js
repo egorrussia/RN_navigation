@@ -2,18 +2,21 @@ import React, { createContext, useContext, useState } from 'react';
 const AuthContext = createContext();
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react/cjs/react.development';
-const USER_KEY='@user_key';
+
 //import {API_URL} from '../../config'
 
 const API_URL = "http://159.253.19.16:3001"
 
 export const AuthProvider = ({children}) => {
 
-  const [phone, setPhone] = useState('');
-  const [userName, setUserName] = useState('');
-  const [shops, setShops] = useState([]);
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
+  const [user,setUser] = useState({
+    name: '',
+    phone: '',
+    shops: [],
+    email: ''
+
+  });
+
   const [loading, setLoading] = useState(true);
 
   const initialLoginState = {
@@ -57,41 +60,15 @@ export const AuthProvider = ({children}) => {
 
   const [loginState, dispatch] = React.useReducer(loginReducer, initialLoginState);
 
-  useEffect(()=>{
-    
-    (async ()=>{
-
-      try {
-        await AsyncStorage.setItem(USER_KEY, JSON.stringify({userName}))
-      } catch (e) {
-        // saving error
-      }
-
-    })()
-
-},[userName])
-
-  // useEffect(()=>{
-  //     try {
-  //       let userData = async()=>await AsyncStorage.getItem(USER_KEY)
-  //       if(userData){
-  //         const {userName}=JSON.parse(userData)
-  //         if(userName){
-  //           setUserName(userName)
-  //         }
-  //       }
-  //       setLoading(false)
-  //     } catch (e) {
-  //       // saving error
-  //     }
-  // },[])
+  const token = loginState.userToken;
 
   useEffect(() => {
       let userToken = null;
       let name = null;
       try {
         userToken = async()=>await AsyncStorage.getItem('userToken');
-        name = async()=>await AsyncStorage.getItem('userName');
+        user = async()=>await AsyncStorage.getItem('user');
+        name = user.name;
       } catch(e) {
         console.log(e);
       }
@@ -100,25 +77,25 @@ export const AuthProvider = ({children}) => {
 
 
   //регистрация
-  const  userSignUp = (func) =>{
+  const  userSignUp = (name,password,func) =>{
 
      fetch(API_URL + "/users/signup",{
       method:"POST",
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         phone,
-        name: userName,
-        password,
-        selected_shop_ids:shops
+        name,
+        password
       })
     })
     .then(res=>res.json())
     .then(async data=>{
-        const {name, shops, email, phone,role,token='1234'} = data.item 
+      console.log(data)
+        const {name, email, phone,role,token} = data
         func()
         try {
           await AsyncStorage.setItem('userToken', token);
-          await AsyncStorage.setItem('userName', name);
+          await AsyncStorage.setItem('user', { name,email,phone,role });
         } catch(e) {
           console.log(e);
         }
@@ -139,15 +116,13 @@ export const AuthProvider = ({children}) => {
     })
     .then(res=>res.json())
     .then(async data=>{
-        const {name, shops, email, phone,role,token='1234'} = data.item 
-        setUserName(name)
-        setEmail(email)
-        setPhone(phone)
+        const {name, shops, email, phone,role,token} = data 
+        setUser({...user,name,email,phone,shops})
         func()
 
         try {
           await AsyncStorage.setItem('userToken', token);
-          await AsyncStorage.setItem('userName', name);
+          await AsyncStorage.setItem('user', { name,shops,email,phone,role });
         } catch(e) {
           console.log(e);
         }
@@ -160,7 +135,7 @@ export const AuthProvider = ({children}) => {
    const userSignOut = async ()=>{
     try {
       await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('userName');
+      await AsyncStorage.removeItem('user');
     } catch(e) {
       console.log(e);
     }
@@ -203,23 +178,16 @@ export const AuthProvider = ({children}) => {
   }
 
   const value = {
-    phone,
-    shops,
-    userName,
-    password,
-    setPassword,
-    setShops,
-    setUserName,
-    setPhone,
-    email,
-    setEmail,
     userSignUp,
     userSignIn,
     checkPhone,
     checkCode,
     loading,
     userSignOut,
-    loginState
+    loginState,
+    token,
+    user,
+    setUser
 
   }
 

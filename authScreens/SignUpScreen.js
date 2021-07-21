@@ -15,7 +15,7 @@ const SignUpScreen = ({navigation})=>{
         code:''
     })
 
-    const {setPhone,checkPhone,checkCode} = useAuth();
+    const {setUser,checkPhone,checkCode} = useAuth();
     const [phoneFieldEnable,setPhoneFieldEnable] = useState(true);
     const [getCodeButtonEnable,setGetCodeButtonEnable] = useState(false);
     const [codeFieldEnable,setCodeFieldEnable] = useState(false);
@@ -95,7 +95,9 @@ const SignUpScreen = ({navigation})=>{
                 checkCode({phone:data.phone,code:val},(success)=>{
 
                     if(success){
-                        setPhone(data.phone);
+                        setUser((user)=>{
+                            return {...user, phone: data.phone}
+                        });
                         navigation.navigate("UserData");
                     }else{
                         setErrorCodeMsgEnable(true);
@@ -117,9 +119,9 @@ const SignUpScreen = ({navigation})=>{
 
     const getCode = () =>{
 
-        setErrorCodeMsgEnable(false);
+        setErrorPhoneMsgEnable(false); 
         checkPhone(data,(check)=>{
-                        
+       
             if(check){
                 setPhoneFieldEnable(false);
                 setCodeFieldEnable(true);
@@ -130,7 +132,7 @@ const SignUpScreen = ({navigation})=>{
                 })
 
             }else{
-                setErrorMsgEnable(true);
+                setErrorPhoneMsgEnable(true);
            }
 
         })

@@ -13,10 +13,11 @@ const RootStack = createStackNavigator();
 const RootStackNavigator = ({navigation})=>{
     return(
         <RootStack.Navigator headerMode='none'>
+            <RootStack.Screen name="SelectShop" component={SelectShopScreen}/>
             <RootStack.Screen name="SignIn" component={SignInScreen}/>
             <RootStack.Screen name="SignUp" component={SignUpScreen}/>
             <RootStack.Screen name="UserData" component={UserDataScreen}/>
-            <RootStack.Screen name="SelectShop" component={SelectShopScreen}/>
+            {/* <RootStack.Screen name="SelectShop" component={SelectShopScreen}/> */}
             <RootStack.Screen name="Products" component={DrawerNavigator}/>
         </RootStack.Navigator>
     )
