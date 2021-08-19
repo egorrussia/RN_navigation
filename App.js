@@ -5,7 +5,66 @@ import RootStackNavigator from './navigators/RootStackNavigator';
 import {AuthProvider,useAuth} from "./components/context/auth";
 import { useFonts } from 'expo-font';
 import Loader from "./components/Loader";
-import {NativeBaseProvider} from 'native-base';
+import {NativeBaseProvider,StatusBar,extendTheme} from 'native-base';
+import {StyleSheet} from 'react-native';
+
+
+const theme = extendTheme({
+  components: {
+    Button: {
+      baseStyle: {
+        rounded: 'md',
+        
+      },
+      defaultProps: {
+        colorScheme: 'emerald',
+        _text: {
+          color:'emerald.50'
+        },
+      },
+      variants: {
+        ghost: {
+          colorScheme: 'emerald',
+          _text: {
+            color:'emerald.50'
+          },            
+        }
+      },    
+    },
+    Heading: {
+      baseStyle: ({ colorMode }) => {
+        return {
+          color: colorMode === 'dark' ? 'red.300' : 'blue.300',
+          fontWeight: 'normal',
+        };
+      },
+    },
+    Input:{
+      defaultProps: {
+        _focus: {
+          border: '#6ee7b7',
+        }
+      },
+    },
+    FormControlLabel: {
+      baseStyle: {
+        _text:{
+          fontSize: 'sm',
+          fontWeight: 'bold'
+
+        },
+        
+      },
+      defaultProps: {
+        _text: {
+          color: 'muted.500'
+        },
+      },
+
+
+  }
+  },
+});
 
 
 const NavigationWrapper = ()=>{
@@ -17,15 +76,23 @@ const NavigationWrapper = ()=>{
   }
   const auth = !!userToken;
   return (
-      <NavigationContainer>
-        {(auth) ? <DrawerNavigator/> : <RootStackNavigator/>} 
-      </NavigationContainer>
 
+        <NavigationContainer>
+          <StatusBar backgroundColor="#009387" barStyle="light-content"/>
+          {(auth) ? <DrawerNavigator/> : <RootStackNavigator/>} 
+        </NavigationContainer>
   )
 
 }
 
+const styles = StyleSheet.create({
+  container: {
 
+      backgroundColor: 'red'
+
+    },
+
+});
 
 
 const App = () => {
@@ -57,30 +124,14 @@ const App = () => {
     }
 
     return(
-      <NativeBaseProvider>
+      <NativeBaseProvider theme={theme}>
         <AuthProvider>
           <NavigationWrapper/>
         </AuthProvider>
       </NativeBaseProvider>
+
     )
 
-
-  // if(loading){
-  //   return(
-      
-  //     <NativeBaseProvider>
-  //       <Loader/>
-  //     </NativeBaseProvider>
-  //   )
-  // }
-
-  // return (
-  //   <NativeBaseProvider>
-  //     <AuthProvider>
-  //       <NavigationWrapper/>
-  //     </AuthProvider>
-  //   </NativeBaseProvider>
-  // );
 }
 
 

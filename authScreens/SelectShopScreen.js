@@ -1,15 +1,17 @@
 import React,{useState,useEffect} from 'react';
-import { View,Text,Button,Icon, Modal} from 'native-base';
+import { View,Text,Button,Icon,Center,Box} from 'native-base';
 import MapView,{PROVIDER_GOOGLE} from 'react-native-maps';
 import {useAuth} from '../components/context/auth';
-import {StyleSheet,Dimensions,Image,Platform,Animated} from 'react-native'
+import {StyleSheet,Dimensions,Image,Platform,Animated} from 'react-native';
 import {API_URL} from "../config";
 import {useNavigation} from '@react-navigation/native';
+import Popup from '../components/Popup';
+import {AntDesign} from '@expo/vector-icons';
 
 
-const {width,height} = Dimensions.get('window')
-const CARD_WIDTH = width * 0.8
-const SPACING_FOR_CARD_INSET = width * 0.1 - 10
+const {width,height} = Dimensions.get('window');
+const CARD_WIDTH = width * 0.8;
+const SPACING_FOR_CARD_INSET = width * 0.1 - 10;
 
 const SelectShopsScreen = ()=>{
 
@@ -22,7 +24,7 @@ const SelectShopsScreen = ()=>{
 
     const [shops,setShops] = useState([]);
     const [choosenShops,setChoosenShops] = useState([]);
-    const [showModal, setShowModal] = useState(false);
+    
     
     const [region, setRegion] = useState({
         latitude: 55.63,
@@ -33,7 +35,7 @@ const SelectShopsScreen = ()=>{
 
     const {user, setUser, token} =useAuth();
     
-    
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(()=>{
 
@@ -73,8 +75,7 @@ const SelectShopsScreen = ()=>{
                 }
             },10)
         })
-    
-    })
+    });
 
     const interpolations = shops.map((shop,index)=>{
         const inputRange = [
@@ -82,20 +83,33 @@ const SelectShopsScreen = ()=>{
             index * CARD_WIDTH,
             ((index + 1) * CARD_WIDTH),
           ];
-      
-          const scale = mapAnimation.interpolate({
+        const scale = mapAnimation.interpolate({
             inputRange,
             outputRange: [1, 1.5, 1],
             extrapolate: "clamp"
-          });
-      
-          return { scale };
+        });
+    
+        return { scale };
     })
 
     const onMarkerPress = (mapEventData)=>{
 
         const markerID = mapEventData._targetInst.return.key;
-        let x = (markerID * CARD_WIDTH) + (markerID * 20);
+        let x = 0;
+    
+        shops.forEach((shop, i)=>{
+            if(shop._id==markerID){
+                console.log(i);
+                x = (i * CARD_WIDTH) + (i * 20);
+                return;
+            }
+        })
+
+        //let x = (markerID * CARD_WIDTH) + (markerID * 20);
+        if(Platform.OS=='ios'){
+            x = x - SPACING_FOR_CARD_INSET
+        };
+
         _scrollView.current.scrollTo({x:x,y:0,animated:true})
     }
 
@@ -106,8 +120,9 @@ const SelectShopsScreen = ()=>{
         }
     }
 
+
     return(
-        <View style={styles.container}>
+        <Box>
             <MapView style={styles.map}
                 ref={_map}
                 initialRegion={region}
@@ -145,57 +160,20 @@ const SelectShopsScreen = ()=>{
                 })}
             </MapView>
             <View style={styles.skipWrapper}>
-                <Button style={styles.skipButton} onPress={() => setShowModal(true)}>
-                    <Text style={styles.cardDescription}>Пропустить шаг</Text>
+                <Button colorScheme="emerald" size='sm' onPress={() => setShowModal(true)}>
+                    Пропустить шаг
                 </Button>
             </View>
-
-
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-        <Modal.Content maxWidth="400px">
-          <Modal.CloseButton />
-          <Modal.Header>Modal Title</Modal.Header>
-          <Modal.Body>
-            Sit nulla est ex deserunt exercitation anim occaecat. Nostrud
-            ullamco deserunt aute id consequat veniam incididunt duis in sint
-            irure nisi. Mollit officia cillum Lorem ullamco minim nostrud elit
-            officia tempor esse quis. Sunt ad dolore quis aute consequat. Magna
-            exercitation reprehenderit magna aute tempor cupidatat consequat
-            elit dolor adipisicing. Mollit dolor eiusmod sunt ex incididunt
-            cillum quis. Velit duis sit officia eiusmod Lorem aliqua enim
-            ullamco deserunt aute id consequat veniam incididunt duis in sint
-            irure nisi. Mollit officia cillum Lorem ullamco minim nostrud elit
-            officia tempor esse quis. Sunt ad dolore quis aute consequat. Magna
-            exercitation reprehenderit magna aute tempor cupidatat consequat
-            elit dolor adipisicing. Mollit dolor eiusmod sunt ex incididunt
-            cillum quis. Velit duis sit officia eiusmod Lorem aliqua enim
-            exercitation reprehenderit magna aute tempor cupidatat consequat
-            elit dolor adipisicing. Mollit dolor eiusmod sunt ex incididunt
-            cillum quis. Velit duis sit officia eiusmod Lorem aliqua enim
-            ullamco deserunt aute id consequat veniam incididunt duis in sint
-            irure nisi. Mollit officia cillum Lorem ullamco minim nostrud elit
-            officia tempor esse quis. Sunt ad dolore quis aute consequat. Magna
-            exercitation reprehenderit magna aute tempor cupidatat consequat
-            elit dolor adipisicing. Mollit dolor eiusmod sunt ex incididunt
-            cillum quis. Velit duis sit officia eiusmod Lorem aliqua enim
-          </Modal.Body>
-          <Modal.Footer>
-            <Button.Group variant="ghost" space={2}>
-              <Button>LEARN MORE</Button>
-              <Button
-                onPress={() => {
-                  setShowModal(false)
+            <Popup text="Выбрать магазин можно позже в настройках пользователя"
+                showModal={showModal}
+                setShowModal={setShowModal}
+                buttons={{
+                    buttonYes:{
+                        title:"Да, понятно",
+                        click:()=>navigation.navigate("Products")
+                    }
                 }}
-              >
-                ACCEPT
-              </Button>
-            </Button.Group>
-          </Modal.Footer>
-        </Modal.Content>
-      </Modal>
-
-
-
+            /> 
             <View  style={styles.scrollView}>
                 <Animated.ScrollView
                     ref={_scrollView}
@@ -244,9 +222,7 @@ const SelectShopsScreen = ()=>{
                                         <Text style={styles.cardTitle}>{shop.title}</Text>
                                         <Text style={styles.cardDescription}>Пролетарский пр-т д.20</Text>
                                         <View style={styles.iconWrapper}>
-                                            <Icon 
-                                                type="AntDesign"
-                                                name={(choosenIndex!=-1) ? "checkcircle" : "checkcircleo"}
+                                            <AntDesign name={(choosenIndex!=-1) ? "checkcircle" : "checkcircleo"}
                                                 style={(choosenIndex!=-1) ? styles.checkcircle : styles.checkcircleo}
                                                 onPress={()=>{
                                                     const newShops=[...choosenShops]
@@ -268,25 +244,25 @@ const SelectShopsScreen = ()=>{
                     )}
 
                 </Animated.ScrollView>
-                <Button 
-                    style={styles.button} 
-                    bordered={choosenShops.length==0}
-                    disabled={choosenShops.length==0}
-                    block success
-                    onPress={selectShops}
-                >
-                    <Text>Далее</Text>
-                </Button>
+                <Center>
+                    <Button 
+                        width={CARD_WIDTH}
+                        colorScheme="emerald"
+                        variant={choosenShops.length==0 ? "outline" : "solid"}
+                        disabled={choosenShops.length==0}
+                        onPress={selectShops}
+                    >
+                        Далее
+                    </Button>
+                </Center>
+
             </View>
-        </View>
+        </Box>
     )
 
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1
-    },
     map: {
         height:"100%"
     },
@@ -297,7 +273,10 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         flex:1,
         alignItems: 'center',
-        justifyContent: 'flex-end'
+        justifyContent: 'flex-end',
+        paddingVertical: 10,
+        paddingHorizontal: 5
+
     },
     image:{
         width: 120,
@@ -367,7 +346,8 @@ const styles = StyleSheet.create({
     checkcircle: {
         fontSize: 50,
         fontWeight:"200",
-        color: "green"
+        color:'#10b981'
+
     },
     button:{
         borderRadius: 10,
